@@ -28,7 +28,7 @@ func (c *Counter) Inc() {
 
 func (c *Counter) Sum() uint32 {
 	var sum uint32
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1000; i += 10 {
 		sum += (c.msec[i] + c.msec[i+1]) + (c.msec[i+2] + c.msec[i+3]) + (c.msec[i+4] + c.msec[i+5]) + (c.msec[i+6] + c.msec[i+7]) + (c.msec[i+8] + c.msec[i+9])
 	}
 	atomic.StoreUint32(&c.total, sum)
