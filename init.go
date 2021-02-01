@@ -1,6 +1,9 @@
 package counter
 
-import "time"
+import (
+	"sync/atomic"
+	"time"
+)
 
 func init() {
 	done = make(chan bool, 1)
@@ -9,10 +12,13 @@ func init() {
 		for {
 			select {
 			case <-tickMsec.C:
-				globNow = (time.Now().UnixNano() / 1e6) % 1000
+				now := (time.Now().UnixNano() / 1e6) % 1000
+				atomic.StoreInt64(&globNow, now)
+				mux.RLock()
 				for i := 0; i < len(registry); i++ {
-					registry[i].reset(globNow)
+					registry[i].reset(now)
 				}
+				mux.RUnlock()
 			case <-done:
 				return
 			}
