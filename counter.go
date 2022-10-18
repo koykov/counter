@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Realtime counter.
-// Please note, you shouldn't init counter directly by using `counter.Counter{}`. Use `counter.NewCounter()` instead.
+// Counter is a circular realtime counter.
+// Please don't init counter directly by using `counter.Counter{}`. Use `counter.NewCounter()` instead.
 type Counter struct {
 	// Pointer to global now variable.
 	now *int64
@@ -26,7 +26,7 @@ var (
 	done chan bool
 )
 
-// Create new counter and registry it.
+// NewCounter makes new counter and registry it.
 func NewCounter() *Counter {
 	c := &Counter{}
 	// Take address of global now in milliseconds.
@@ -38,7 +38,7 @@ func NewCounter() *Counter {
 	return c
 }
 
-// Increase counter.
+// Inc increases counter.
 func (c *Counter) Inc() {
 	// Get current millisecond.
 	now := atomic.LoadInt64(c.now)
@@ -46,7 +46,7 @@ func (c *Counter) Inc() {
 	atomic.AddUint32(&c.msec[now], 1)
 }
 
-// Get current value of the counter.
+// Sum returns current value of the counter.
 func (c *Counter) Sum() uint32 {
 	var sum uint32
 	// Roll up the loop with chunks of size 10.
@@ -61,7 +61,7 @@ func (c *Counter) Sum() uint32 {
 	return sum
 }
 
-// Stop all counters.
+// StopAll stops all counters.
 func (c *Counter) StopAll() {
 	done <- true
 }
