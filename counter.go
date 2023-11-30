@@ -23,7 +23,7 @@ var (
 	mux      sync.RWMutex
 	registry []*Counter
 	// Channel to stop all counters.
-	done chan bool
+	done chan struct{}
 )
 
 // NewCounter makes new counter and registry it.
@@ -61,19 +61,19 @@ func (c *Counter) Sum() uint32 {
 	return sum
 }
 
-// StopAll stops all counters.
-func (c *Counter) StopAll() {
-	done <- true
-}
-
 // Reset counter for given millisecond value.
 func (c *Counter) reset(idx int64) {
 	atomic.StoreUint32(&c.msec[idx], 0)
 }
 
+// StopAll stops all counters.
+func StopAll() {
+	done <- struct{}{}
+}
+
 func init() {
 	// Prepare done channel.
-	done = make(chan bool, 1)
+	done = make(chan struct{}, 1)
 	// Init ticker for milliseconds.
 	tickMsec := time.NewTicker(time.Millisecond)
 	go func() {
@@ -93,6 +93,7 @@ func init() {
 				mux.RUnlock()
 			case <-done:
 				// Done signal caught, exiting.
+				tickMsec.Stop()
 				return
 			}
 		}

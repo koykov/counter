@@ -45,5 +45,5 @@ func main() {
 		}()
 	}
 	wg.Wait()
-	c.StopAll()
+	counter.StopAll()
 }
