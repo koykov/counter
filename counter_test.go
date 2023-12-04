@@ -6,20 +6,20 @@ import (
 	"time"
 )
 
-func TestPostponeReduced(t *testing.T) {
+func TestCircular(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		c := NewPostponeReduced(NativeDecrement{})
-		c.Inc().DecAfter(time.Millisecond * 100)
+		c := NewCounter()
+		c.Inc()
 		if c.Sum() != 1 {
 			t.FailNow()
 		}
-		time.Sleep(time.Millisecond * 150)
+		time.Sleep(time.Millisecond * 1500)
 		if c.Sum() != 0 {
 			t.FailNow()
 		}
 	})
 	t.Run("parallel", func(t *testing.T) {
-		c := NewPostponeReduced(NativeDecrement{})
+		c := NewCounter()
 		ctx, cancel := context.WithCancel(context.Background())
 		for i := 0; i < 10; i++ {
 			go func(ctx context.Context) {
@@ -28,7 +28,7 @@ func TestPostponeReduced(t *testing.T) {
 					case <-ctx.Done():
 						return
 					default:
-						c.Inc().DecAfter(time.Second)
+						c.Inc()
 						time.Sleep(time.Microsecond * 500)
 					}
 				}

@@ -6,17 +6,9 @@ import (
 	"time"
 )
 
-// Counter is an alias of Circular. Made for backward compatibility.
-type Counter = Circular
-
-// NewCounter id an alias of NewCircular.
-func NewCounter() *Counter {
-	return NewCircular()
-}
-
-// Circular is a circular realtime counter.
-// Please don't init counter directly by using `counter.Circular{}`. Use `counter.NewCounter()` instead.
-type Circular struct {
+// Counter is a circular realtime counter.
+// Please don't init counter directly by using `counter.Counter{}`. Use `counter.NewCounter()` instead.
+type Counter struct {
 	// Pointer to global now variable.
 	now *int64
 	// Array of counters for each millisecond.
@@ -29,14 +21,14 @@ var (
 	globNow int64
 	// Counters registry and protecting mutex.
 	mux      sync.RWMutex
-	registry []*Circular
+	registry []*Counter
 	// Channel to stop all counters.
 	done chan struct{}
 )
 
-// NewCircular makes new counter and registry it.
-func NewCircular() *Circular {
-	c := &Circular{}
+// NewCounter makes new counter and registry it.
+func NewCounter() *Counter {
+	c := &Counter{}
 	// Take address of global now in milliseconds.
 	c.now = &globNow
 	// Registry new counter.
@@ -47,7 +39,7 @@ func NewCircular() *Circular {
 }
 
 // Inc increases counter.
-func (c *Circular) Inc() {
+func (c *Counter) Inc() {
 	// Get current millisecond.
 	now := atomic.LoadInt64(c.now)
 	// Increase counter of current millisecond.
@@ -55,7 +47,7 @@ func (c *Circular) Inc() {
 }
 
 // Sum returns current value of the counter.
-func (c *Circular) Sum() uint32 {
+func (c *Counter) Sum() uint32 {
 	var sum uint32
 	// Roll up the loop with chunks of size 10.
 	for i := 0; i < 1000; i += 10 {
@@ -70,7 +62,7 @@ func (c *Circular) Sum() uint32 {
 }
 
 // Reset counter for given millisecond value.
-func (c *Circular) reset(idx int64) {
+func (c *Counter) reset(idx int64) {
 	atomic.StoreUint32(&c.msec[idx], 0)
 }
 
