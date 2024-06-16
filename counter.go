@@ -7,12 +7,13 @@ import (
 )
 
 // Counter is a circular realtime counter.
-// Please don't init counter directly by using `counter.Counter{}`. Use `counter.NewCounter()` instead.
 type Counter struct {
 	// Pointer to global now variable.
 	now *int64
 	// Array of counters for each millisecond.
 	msec [1000]uint32
+
+	once sync.Once
 }
 
 var (
@@ -29,17 +30,14 @@ var (
 // NewCounter makes new counter and registry it.
 func NewCounter() *Counter {
 	c := &Counter{}
-	// Take address of global now in milliseconds.
-	c.now = &globNow
-	// Registry new counter.
-	mux.Lock()
-	registry = append(registry, c)
-	mux.Unlock()
+	c.once.Do(c.init)
 	return c
 }
 
 // Inc increases counter.
 func (c *Counter) Inc() {
+	c.once.Do(c.init)
+
 	// Get current millisecond.
 	now := atomic.LoadInt64(c.now)
 	// Increase counter of current millisecond.
@@ -48,6 +46,8 @@ func (c *Counter) Inc() {
 
 // Sum returns current value of the counter.
 func (c *Counter) Sum() uint32 {
+	c.once.Do(c.init)
+
 	var sum uint32
 	// Roll up the loop with chunks of size 10.
 	for i := 0; i < 1000; i += 10 {
@@ -64,6 +64,15 @@ func (c *Counter) Sum() uint32 {
 // Reset counter for given millisecond value.
 func (c *Counter) reset(idx int64) {
 	atomic.StoreUint32(&c.msec[idx], 0)
+}
+
+func (c *Counter) init() {
+	// Take address of global now in milliseconds.
+	c.now = &globNow
+	// Registry new counter.
+	mux.Lock()
+	registry = append(registry, c)
+	mux.Unlock()
 }
 
 // StopAll stops all counters.
